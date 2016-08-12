@@ -52,13 +52,9 @@ module.exports = {
 
 Models may be accessed from our controllers, policies, services, responses, tests, and in custom model methods.  There are many built-in methods available on models, the most important of which are the query methods: [find](http://sailsjs.org/documentation/reference/waterline/models/find.html), [create](http://sailsjs.org/documentation/reference/waterline/models/create.html), [update](http://sailsjs.org/documentation/reference/waterline/models/update.html), and [destroy](http://sailsjs.org/documentation/reference/waterline/models/destroy.html).  These methods are [asynchronous](https://github.com/balderdashy/sails-docs/blob/master/PAGE_NEEDED.md) - under the covers, Waterline has to send a query to the database and wait for a response.
 
-
 Consequently, query methods return a deferred query object.  To actually execute a query, `.exec(cb)` must be called on this deferred object, where `cb` is a callback function to run after the query is complete.
 
 Waterline also includes opt-in support for promises.  Instead of calling `.exec()` on a query object, we can call `.then()`, `.spread()`, or `.catch()`, which will return a [Bluebird promise](https://github.com/petkaantonov/bluebird).
-
-
-
 
 
 ### Model Methods (aka "static" or "class" methods)
@@ -293,6 +289,52 @@ If your app involves multigenerational hair-styling, you might think it would ma
 
 Promises are most effective when used to handle asynchronous, but referentially transparent ("nullipotent") operations; i.e. logic without any side-effects.
 -->
+
+
+### Extending models
+
+Packages can introduce their own models with prebuilt properties and methods that our app's models can extend. If a package exposes a model in an Npm package,
+
+```javascript
+// otherApp/api/models/Person.js
+module.exports = {
+  attributes: {
+    firstName: {
+      type: 'string'
+    },
+    lastName: {
+      type: 'string'
+    },
+  }
+};
+```
+
+```javascript
+// myapp/api/models/PetOwner.js
+
+// Lodash's `.extend` method is useful for this senario;
+// see http://underscorejs.org/#extend for the docs
+let _ = require('lodash');
+
+// Import the model from the otherApp package
+let Person = require('otherApp/api/models/Person');
+
+// Pet owners get properties and methods specific to them
+let PetOwner = {
+  attributes: {
+    pets: {
+      collection: "pet",
+      via: "owner",
+    },
+    // Pet owners can give commands to their pets
+    issueCommand: function(order) {
+      return `${this.firstName} says ${order}!`;
+    }
+  }
+};
+
+module.exports = _.extend(PetOwner, Person);
+```
 
 
 
